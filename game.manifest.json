@@ -1,13 +1,13 @@
 {
-  "slug": "__SLUG__",
-  "title": "__TITLE__",
-  "description": "__DESCRIPTION__",
-  "framework": "vite",
+  "slug": "shard-dominion-v2",
+  "title": "Shard Dominion v2",
+  "description": "Classic sci-fi RTS on Aether Prime — bake-off build 3, from the Hermes Execution Manifest v2.0 (veterancy, hazard zones)",
+  "framework": "vite-phaser",
   "category": "arcade",
   "supportsMobile": true,
   "version": "0.1.0",
   "emoji": "🎮",
   "entry": "index.html",
   "buildCommand": "npm run build",
-  "repo": "Brynrg/__SLUG__"
+  "repo": "Brynrg/shard-dominion-v2"
 }
