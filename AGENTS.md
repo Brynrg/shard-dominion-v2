@@ -55,3 +55,15 @@ A Vite + TypeScript scaffold consuming [speedrungames-sdk](https://github.com/Br
    deploy PR won't auto-merge.
 4. **No secrets in the repo.** The bundle ships to every player.
 5. **Never deploy by hand into the portal.** Push, or `npm run deploy:portal`.
+
+## Project spec (staged by orchestrator)
+
+The authoritative game spec is **`docs/BUILD_PLAN.md`** (Shard Dominion Hermes
+Execution Manifest v2.0, staged verbatim from the source). Execute its phases
+sequentially — engine skeleton first, placeholder visuals; the Blender asset
+pipeline (Phase 5) is a background batch task and must never block the playable
+build. Where its seed files conflict with this template's deploy contract
+(relative paths, `base: "./"`, game.manifest.json, CI), the deploy contract
+above wins. Definition of done: game live and playable at
+`https://speedrungames.net/games/shard-dominion-v2/` via push-to-main
+auto-deploy.
