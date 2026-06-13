@@ -5,6 +5,9 @@ import { defineConfig } from "vite";
 // absolute paths (`/assets/foo.js`) would break under that mount.
 export default defineConfig({
   base: "./",
+  server: {
+    port: 4173
+  },
   build: {
     target: "es2022",
     sourcemap: false,
