@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "pack-assets": "node scripts/pack_sprites.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint:paths": "node scripts/check-relative-paths.mjs"
   },
   "dependencies": {
     "phaser": "^3.80.0",
