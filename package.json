@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "pack-assets": "node scripts/pack_sprites.js"
+    "pack-assets": "node scripts/pack_sprites.js",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "phaser": "^3.80.0",
