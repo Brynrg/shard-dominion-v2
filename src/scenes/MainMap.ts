@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 
 import { EntityManager } from '../ecs/EntityManager';
 import { DataLoader } from '../data/DataLoader';
-import { PositionComponent, RenderableComponent, HealthComponent, ExperienceComponent, ResourceComponent, CombatComponent, UnitTypeComponent, MovementComponent } from '../ecs/Component';
+import { PositionComponent, RenderableComponent, HealthComponent, ExperienceComponent, ResourceComponent, CombatComponent, UnitTypeComponent, MovementComponent, FactionComponent } from '../ecs/Component';
 import { GridManager } from '../core/GridManager';
 
 export class MainMapScene extends Phaser.Scene {
@@ -101,6 +101,7 @@ export class MainMapScene extends Phaser.Scene {
       new ResourceComponent(500, 0, 'aether_shards'),
       new UnitTypeComponent('harvester', 'vanguard_enclave'),
       new MovementComponent([], 0, 1.5, false),
+      new FactionComponent('vanguard_enclave'),
     ];
   }
 
@@ -112,6 +113,7 @@ export class MainMapScene extends Phaser.Scene {
       new CombatComponent(45, 5, 1.5, 0, null),
       new UnitTypeComponent('combat_tank', 'vanguard_enclave'),
       new MovementComponent([], 0, 2.2, false),
+      new FactionComponent('vanguard_enclave'),
     ];
   }
 

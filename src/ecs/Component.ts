@@ -126,3 +126,12 @@ export class BuildingComponent extends Component {
     super('Building');
   }
 }
+
+// Faction component - identifies which team a unit belongs to
+export class FactionComponent extends Component {
+  constructor(
+    public faction: string = 'vanguard_enclave' // player, enemy, etc.
+  ) {
+    super('Faction');
+  }
+}
