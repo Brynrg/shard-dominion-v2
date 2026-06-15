@@ -5,12 +5,18 @@ import { EntityManager } from '../ecs/EntityManager';
 import { DataLoader } from '../data/DataLoader';
 import { PositionComponent, RenderableComponent, HealthComponent, ExperienceComponent, ResourceComponent, CombatComponent, UnitTypeComponent, MovementComponent, FactionComponent, VelocityComponent } from '../ecs/Component';
 import { GridManager } from '../core/GridManager';
+import { CombatSystem } from '../systems/CombatSystem';
+import { EconomySystem } from '../systems/EconomySystem';
+import { PathfindingSystem } from '../systems/PathfindingSystem';
 
 export class MainMapScene extends Phaser.Scene {
-  private gameInstance: any;
+  private gameInstance: any = {};
   private entityManager!: EntityManager;
   private dataLoader!: DataLoader;
   private gridManager!: GridManager;
+  private combatSystem!: CombatSystem;
+  private economySystem!: EconomySystem;
+  private pathfindingSystem!: PathfindingSystem;
   private selectedEntities: number[] = [];
 
   constructor() {
@@ -19,10 +25,36 @@ export class MainMapScene extends Phaser.Scene {
 
   init(): void {
     // Initialize systems
-    this.gameInstance = {};
     this.entityManager = new EntityManager();
     this.dataLoader = new DataLoader();
     this.gridManager = new GridManager();
+    
+    // Initialize game systems
+    this.combatSystem = new CombatSystem(this.entityManager);
+    this.economySystem = new EconomySystem(this.entityManager);
+    this.pathfindingSystem = new PathfindingSystem(this.entityManager, this.gridManager);
+
+    // Add start/update methods to gameInstance
+    this.gameInstance = {
+      start: () => {
+        console.log('Systems initialized:', {
+          combat: !!this.combatSystem,
+          economy: !!this.economySystem,
+          pathfinding: !!this.pathfindingSystem
+        });
+      },
+      update: (delta: number) => {
+        // Update all systems
+        this.combatSystem.update(delta);
+        this.economySystem.update(delta);
+        
+        // Update pathfinding for all moving entities
+        const entities = this.entityManager.getAllEntities();
+        for (const entityId of entities) {
+          this.pathfindingSystem.updateMovement(entityId, delta);
+        }
+      }
+    };
 
     // Seed initial grid data after systems are ready
     this.seedInitialGrid();
