@@ -10,6 +10,11 @@ export class EconomySystem extends System {
     super(entityManager);
   }
 
+  // Set data loader for accessing configuration (placeholder for future use)
+  setDataLoader(_dataLoader: any): void {
+    // TODO: Use dataLoader for economy configuration in future
+  }
+
   update(deltaTime: number): void {
     // Process harvester logic
     this.processHarvesters(deltaTime);
@@ -48,6 +53,7 @@ export class EconomySystem extends System {
       if (!position || !health) return;
 
       // Simple refinery logic: convert harvester resources to credits
+      // Could use dataLoader for conversion rates in future
       if (Math.random() < 0.005) { // 0.5% chance per frame
         this.globalCredits += 5;
       }

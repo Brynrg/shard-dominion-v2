@@ -33,6 +33,10 @@ export class MainMapScene extends Phaser.Scene {
     this.combatSystem = new CombatSystem(this.entityManager);
     this.economySystem = new EconomySystem(this.entityManager);
     this.pathfindingSystem = new PathfindingSystem(this.entityManager, this.gridManager);
+    
+    // Connect systems to DataLoader
+    this.combatSystem.setDataLoader(this.dataLoader);
+    this.economySystem.setDataLoader(this.dataLoader);
 
     // Add start/update methods to gameInstance
     this.gameInstance = {

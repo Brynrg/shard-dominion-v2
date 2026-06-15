@@ -2,12 +2,19 @@
 import { EntityManager } from '../ecs/EntityManager';
 import { System } from '../ecs/System';
 import { PositionComponent, HealthComponent, ExperienceComponent, CombatComponent } from '../ecs/Component';
+import { DataLoader } from '../data/DataLoader';
 
 export class CombatSystem extends System {
   private combatRange = 100; // pixels
+  private dataLoader!: DataLoader;
 
   constructor(entityManager: EntityManager) {
     super(entityManager);
+  }
+
+  // Set data loader for accessing configuration
+  setDataLoader(dataLoader: DataLoader): void {
+    this.dataLoader = dataLoader;
   }
 
   update(deltaTime: number): void {
@@ -135,11 +142,6 @@ export class CombatSystem extends System {
     }
   }
 
-  private getVeterancyMultiplier(): number {
-    // Load from config - for now return default
-    return 1.15;
-  }
-
   private findNearestEnemy(entityId: number): number | null {
     const position = this.entityManager.getComponent<PositionComponent>(entityId, PositionComponent);
     if (!position) return null;
@@ -175,13 +177,17 @@ export class CombatSystem extends System {
   }
 
   private getVeterancyConfig(): any {
-    // Placeholder for veterancy configuration from DataLoader
-    return {
-      rank_1_kills: 3,
-      rank_2_kills: 7,
-      rank_3_kills: 15,
-      stat_multiplier_per_rank: 1.15
-    };
+    // Load from DataLoader
+    if (this.dataLoader) {
+      const globalMechanics = this.dataLoader.getGlobalMechanics();
+      return globalMechanics?.veterancy || null;
+    }
+    return null;
+  }
+
+  private getVeterancyMultiplier(): number {
+    const config = this.getVeterancyConfig();
+    return config?.stat_multiplier_per_rank || 1.15;
   }
 
   // Add Silicate Leviathan AI (invisible, moves under sand)
