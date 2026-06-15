@@ -7,14 +7,16 @@
 // - 100x100 isometric grid
 // - Core RTS systems: terrain, movement, economy, combat
 
-import { GridManager } from "./core/GridManager";
-import { EntityManager } from "./ecs/EntityManager";
-import { DataLoader } from "./data/DataLoader";
-import { PositionComponent, RenderableComponent, VelocityComponent, MovementComponent } from "./ecs/Component";
-import { CombatSystem } from "./systems/CombatSystem";
-import { EconomySystem } from "./systems/EconomySystem";
-import { SpeedrunTimer, createHUD, createStorage } from "speedrungames-sdk";
-import "./styles.css";
+import Phaser from 'phaser';
+import { MainMapScene } from './scenes/MainMap';
+import { GridManager } from './core/GridManager';
+import { EntityManager } from './ecs/EntityManager';
+import { DataLoader } from './data/DataLoader';
+import { PositionComponent, RenderableComponent, VelocityComponent, MovementComponent } from './ecs/Component';
+import { CombatSystem } from './systems/CombatSystem';
+import { EconomySystem } from './systems/EconomySystem';
+import { SpeedrunTimer, createHUD, createStorage } from 'speedrungames-sdk';
+import './styles.css';
 
 // Must match game.manifest.json#slug. `pnpm new:game` substitutes this.
 const SLUG: string = "shard-dominion-v2";
@@ -22,12 +24,6 @@ const UNSET_SLUG = "__SLUG__";
 
 const root = document.getElementById("app");
 if (!root) throw new Error("#app element missing in index.html");
-
-const canvas = document.createElement("canvas");
-canvas.className = "game-canvas";
-canvas.width = 800;
-canvas.height = 600;
-root.appendChild(canvas);
 
 const hud = createHUD(root);
 const timer = new SpeedrunTimer();
@@ -57,6 +53,8 @@ let entityManager: EntityManager;
 let dataLoader: DataLoader;
 let combatSystem: CombatSystem;
 let economySystem: EconomySystem;
+
+
 // Initialize game systems
 async function initializeGame(): Promise<void> {
   console.log("Initializing Shard Dominion v2 systems...");
@@ -77,6 +75,14 @@ async function initializeGame(): Promise<void> {
   // Set up grid for demonstration
   setupGrid();
 
+  // Create Phaser game with MainMapScene
+  const gameConfig = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    scene: [MainMapScene]
+  };
+  
   console.log("Game systems initialized!");
 }
 
@@ -125,17 +131,12 @@ function gameLoop(currentTime: number): void {
   // Update game systems
   updateGame(deltaTime);
   
-  // Render
-  renderGame();
-  
   frameCount++;
   
   // Update HUD status every 60 frames (~1 second)
   if (frameCount % 60 === 0) {
     hud.setStatus(`ECS active: ${entityManager.getEntityCount()} entities | Grid: ${gameState.gridSize}x${gameState.gridSize}`);
   }
-  
-  requestAnimationFrame(gameLoop);
 }
 
 function updateGame(deltaTime: number): void {
@@ -165,53 +166,6 @@ function updateGame(deltaTime: number): void {
 
   // Update economy system
   economySystem.update(deltaTime);
-}
-
-function renderGame(): void {
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-  
-  // Clear canvas
-  ctx.fillStyle = '#1a1a2e';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  // Draw debug grid overlay
-  ctx.strokeStyle = '#333';
-  ctx.lineWidth = 1;
-  
-  for (let x = 0; x <= 20; x++) {
-    for (let y = 0; y <= 15; y++) {
-      const px = x * 40;
-      const py = y * 40;
-      
-      ctx.strokeRect(px, py, 40, 40);
-    }
-  }
-  
-  // Highlight hazard zones
-  ctx.fillStyle = 'rgba(255, 100, 100, 0.3)';
-  ctx.fillRect(50 * 4, 50 * 4, 80, 80); // 2x2 hazard zone
-  
-  // Render all entities
-  entityManager.getAllEntities().forEach((_, entityId) => {
-    const position = entityManager.getComponent<PositionComponent>(entityId, PositionComponent);
-    const renderable = entityManager.getComponent<RenderableComponent>(entityId, RenderableComponent);
-    
-    if (position && renderable) {
-      ctx.fillStyle = renderable.color;
-      ctx.fillRect(
-        position.x - renderable.width / 2,
-        position.y - renderable.height / 2,
-        renderable.width,
-        renderable.height
-      );
-      
-      // Draw entity ID
-      ctx.fillStyle = '#fff';
-      ctx.font = '10px system-ui';
-      ctx.fillText(String(entityId), position.x - 5, position.y - 5);
-    }
-  });
 }
 
 // Initialize and start the game

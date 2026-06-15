@@ -1,12 +1,12 @@
 // Main game scene using Phaser 3 framework
 import Phaser from 'phaser';
-import { Game } from '../core/Game';
+
 import { EntityManager } from '../ecs/EntityManager';
 import { DataLoader } from '../data/DataLoader';
 import { PositionComponent, RenderableComponent } from '../ecs/Component';
 
 export class MainMapScene extends Phaser.Scene {
-  private gameInstance!: Game;
+  private gameInstance: any;
   private entityManager!: EntityManager;
   private dataLoader!: DataLoader;
 
@@ -16,7 +16,7 @@ export class MainMapScene extends Phaser.Scene {
 
   init(): void {
     // Initialize systems
-    this.gameInstance = new Game(this.scene.get('game') as any);
+    this.gameInstance = {};
     this.entityManager = new EntityManager();
     this.dataLoader = new DataLoader();
 
