@@ -178,10 +178,28 @@ export class MainMapScene extends Phaser.Scene {
         let color = '#888888'; // Concrete (default)
         let alpha = 0.3;
         
+        // Get terrain type and set color
+        const terrainType = this.gridManager.getTerrainType(gridX, gridY);
+        switch (terrainType) {
+          case 'grass':
+            color = '#4CAF50'; // Green
+            break;
+          case 'dirt':
+            color = '#8D6E63'; // Brown
+            break;
+          case 'stone':
+            color = '#9E9E9E'; // Grey
+            break;
+          case 'concrete':
+          default:
+            color = '#757575'; // Concrete (grey)
+            break;
+        }
+        
         // Check if it's a hazard zone
         if (this.gridManager.isInHazardZone(gridX, gridY)) {
           color = '#ff6666'; // Red for hazards
-          alpha = 0.5;
+          alpha = 0.6;
         }
         
         // Draw a simple rectangle for each tile
@@ -206,6 +224,23 @@ export class MainMapScene extends Phaser.Scene {
       const x = Math.floor(Math.random() * 100);
       const y = Math.floor(Math.random() * 100);
       this.gridManager.setWalkable(x, y, false);
+    }
+
+    // Add terrain types
+    for (let x = 0; x < 100; x++) {
+      for (let y = 0; y < 100; y++) {
+        // Create patches of different terrain types
+        const terrainType = Math.random();
+        if (terrainType < 0.3) {
+          this.gridManager.setTerrainType(x, y, 'grass');
+        } else if (terrainType < 0.6) {
+          this.gridManager.setTerrainType(x, y, 'concrete');
+        } else if (terrainType < 0.8) {
+          this.gridManager.setTerrainType(x, y, 'dirt');
+        } else {
+          this.gridManager.setTerrainType(x, y, 'stone');
+        }
+      }
     }
 
     // Add one hazard zone for demo

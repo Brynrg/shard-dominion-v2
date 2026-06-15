@@ -4,6 +4,7 @@ export class GridManager {
   private cellSize = 32;
   private grid: Map<string, any> = new Map();
   private hazardZones: Set<string> = new Set();
+  private terrainTypes: Map<string, string> = new Map();
 
   constructor() {
     // Initialize grid
@@ -124,5 +125,16 @@ export class GridManager {
     }
     
     return hazards;
+  }
+
+  // Terrain type methods
+  setTerrainType(x: number, y: number, type: string): void {
+    const key = this.gridKey(x, y);
+    this.terrainTypes.set(key, type);
+  }
+
+  getTerrainType(x: number, y: number): string {
+    const key = this.gridKey(x, y);
+    return this.terrainTypes.get(key) || 'concrete';
   }
 }
