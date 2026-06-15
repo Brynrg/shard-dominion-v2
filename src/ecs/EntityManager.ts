@@ -21,11 +21,6 @@ export class EntityManager {
     this.entities.delete(entityId);
   }
 
-  // Get all entities
-  getAllEntities(): Map<number, any> {
-    return this.entities;
-  }
-
   // Get specific entity
   getEntity(entityId: number): any | null {
     return this.entities.get(entityId) || null;
@@ -89,6 +84,11 @@ export class EntityManager {
   // Count total entities
   getEntityCount(): number {
     return this.entities.size;
+  }
+
+  // Get all entity IDs
+  getAllEntities(): number[] {
+    return Array.from(this.entities.keys());
   }
 
   // Clear all entities

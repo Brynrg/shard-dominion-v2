@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 
 import { EntityManager } from '../ecs/EntityManager';
 import { DataLoader } from '../data/DataLoader';
-import { PositionComponent, RenderableComponent, HealthComponent, ExperienceComponent, ResourceComponent, CombatComponent, UnitTypeComponent, MovementComponent, FactionComponent } from '../ecs/Component';
+import { PositionComponent, RenderableComponent, HealthComponent, ExperienceComponent, ResourceComponent, CombatComponent, UnitTypeComponent, MovementComponent, FactionComponent, VelocityComponent } from '../ecs/Component';
 import { GridManager } from '../core/GridManager';
 
 export class MainMapScene extends Phaser.Scene {
@@ -11,6 +11,7 @@ export class MainMapScene extends Phaser.Scene {
   private entityManager!: EntityManager;
   private dataLoader!: DataLoader;
   private gridManager!: GridManager;
+  private selectedEntities: number[] = [];
 
   constructor() {
     super({ key: 'MainMap' });
@@ -45,6 +46,9 @@ export class MainMapScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, 3200, 3200); // Large isometric world
     this.cameras.main.setZoom(1);
 
+    // Add input handling
+    this.input.on('pointerdown', this.handlePointerDown, this);
+
     // Add some debug info
     this.add.text(10, 10, 'Shard Dominion v2 - ECS System Running', {
       fontSize: '18px',
@@ -62,11 +66,48 @@ export class MainMapScene extends Phaser.Scene {
     // Update game systems
     this.gameInstance.update(delta);
 
-    // Update entities
-    // Placeholder for entity updates
+    // Update entities - simple movement
+    const entities = this.entityManager.getAllEntities();
+    for (const entityId of entities) {
+      const position = this.entityManager.getComponent<PositionComponent>(entityId, PositionComponent);
+      const velocity = this.entityManager.getComponent<VelocityComponent>(entityId, VelocityComponent);
+      const movement = this.entityManager.getComponent<MovementComponent>(entityId, MovementComponent);
+
+      if (position && velocity && movement) {
+        // Simple movement based on target in path
+        if (movement.isMoving && movement.path.length > 0) {
+          const target = movement.path[movement.currentPathIndex];
+          const dx = target.x - position.x;
+          const dy = target.y - position.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 5) {
+            // Reached target
+            movement.currentPathIndex++;
+            if (movement.currentPathIndex >= movement.path.length) {
+              movement.path = [];
+              movement.currentPathIndex = 0;
+              movement.isMoving = false;
+            }
+          } else {
+            // Move towards target
+            const speed = movement.speed || 1;
+            velocity.vx = (dx / distance) * speed;
+            velocity.vy = (dy / distance) * speed;
+          }
+        } else {
+          velocity.vx = 0;
+          velocity.vy = 0;
+        }
+
+        // Update position based on velocity
+        position.x += velocity.vx;
+        position.y += velocity.vy;
+      }
+    }
 
     // For now, just rotate camera for visual feedback
-    if (this.input.activePointer.isDown) {
+    if (this.input.activePointer.isDown && this.selectedEntities.length === 0) {
       this.cameras.main.setScroll(
         this.input.activePointer.x - 400,
         this.input.activePointer.y - 300
@@ -157,6 +198,30 @@ export class MainMapScene extends Phaser.Scene {
   handlePlacement() {
     // Placeholder for placement logic
     console.log('Handling placement...');
+  }
+
+  // Handle pointer click for unit selection and movement
+  private handlePointerDown(): void {
+    const worldX = this.input.activePointer.x + this.cameras.main.scrollX;
+    const worldY = this.input.activePointer.y + this.cameras.main.scrollY;
+
+    // For now, select the first spawned unit and move it to the clicked position
+    if (this.selectedEntities.length === 0) {
+      // Select first entity (harvester)
+      this.selectedEntities.push(this.entityManager.getAllEntities()[0]);
+      console.log('Selected entity:', this.selectedEntities[0]);
+    }
+
+    // Move selected entity to clicked position
+    const entityId = this.selectedEntities[0];
+    const movement = this.entityManager.getComponent<MovementComponent>(entityId, MovementComponent);
+    if (movement) {
+      movement.path = [];
+      movement.currentPathIndex = 0;
+      movement.isMoving = true;
+      movement.path.push({ x: worldX, y: worldY });
+      console.log('Moving entity', entityId, 'to position:', worldX, worldY);
+    }
   }
 
   // Camera controls
