@@ -60,8 +60,8 @@ export class PathfindingSystem {
 
   // A* pathfinding algorithm
   findPath(startX: number, startY: number, goalX: number, goalY: number): Array<{ x: number; y: number }> {
-    const start = { x: Math.floor(startX / 32), y: Math.floor(startY / 32) };
-    const goal = { x: Math.floor(goalX / 32), y: Math.floor(goalY / 32) };
+    const start = this.worldToGrid(startX, startY);
+    const goal = this.worldToGrid(goalX, goalY);
 
     // Ensure start and goal are valid
     if (!this.isWalkable(start.x, start.y) || !this.isWalkable(goal.x, goal.y)) {

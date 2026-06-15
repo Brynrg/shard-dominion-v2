@@ -23,6 +23,9 @@ export class MainMapScene extends Phaser.Scene {
     this.dataLoader = new DataLoader();
     this.gridManager = new GridManager();
 
+    // Seed initial grid data after systems are ready
+    this.seedInitialGrid();
+
     // Load faction data
     this.dataLoader.load().then(() => {
       console.log('Faction data loaded:', this.dataLoader.getFactions());
@@ -192,6 +195,23 @@ export class MainMapScene extends Phaser.Scene {
     }
     
     console.log('Rendered 100x100 terrain grid');
+  }
+
+  // Seed initial grid data
+  private seedInitialGrid(): void {
+    console.log('Seeding initial grid data...');
+
+    // Add some obstacles
+    for (let i = 0; i < 20; i++) {
+      const x = Math.floor(Math.random() * 100);
+      const y = Math.floor(Math.random() * 100);
+      this.gridManager.setWalkable(x, y, false);
+    }
+
+    // Add one hazard zone for demo
+    this.gridManager.setHazardZone(50, 50, true);
+
+    console.log('Initial grid data seeded');
   }
 
   // Update hazard zones
