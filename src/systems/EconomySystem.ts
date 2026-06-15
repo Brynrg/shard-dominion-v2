@@ -18,7 +18,6 @@ export class EconomySystem extends System {
   update(deltaTime: number): void {
     // Process harvester logic
     this.processHarvesters(deltaTime);
-
     // Process refinery logic
     this.processRefineries(deltaTime);
   }
@@ -60,6 +59,13 @@ export class EconomySystem extends System {
     });
   }
 
+  // Add credits to global pool
+  addCredits(amount: number): void {
+    this.globalCredits += amount;
+    console.log(`Added ${amount} credits. Total: ${this.globalCredits}`);
+  }
+
+  // Get current global credits
   getGlobalCredits(): number {
     return this.globalCredits;
   }

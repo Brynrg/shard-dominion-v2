@@ -1,7 +1,7 @@
 // Grid-based spatial manager for 100x100 isometric map
 export class GridManager {
   private gridSize = 100;
-  private cellSize = 32;
+  public cellSize = 32;
   private grid: Map<string, any> = new Map();
   private hazardZones: Set<string> = new Set();
   private terrainTypes: Map<string, string> = new Map();

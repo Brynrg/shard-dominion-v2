@@ -8,6 +8,7 @@ import { GridManager } from '../core/GridManager';
 import { CombatSystem } from '../systems/CombatSystem';
 import { EconomySystem } from '../systems/EconomySystem';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
+import { HarvesterFSM } from '../systems/HarvesterFSM';
 
 export class MainMapScene extends Phaser.Scene {
   private gameInstance: any = {};
@@ -17,6 +18,7 @@ export class MainMapScene extends Phaser.Scene {
   private combatSystem!: CombatSystem;
   private economySystem!: EconomySystem;
   private pathfindingSystem!: PathfindingSystem;
+  private harvesterFSM!: HarvesterFSM;
   private selectedEntities: number[] = [];
 
   constructor() {
@@ -28,15 +30,18 @@ export class MainMapScene extends Phaser.Scene {
     this.entityManager = new EntityManager();
     this.dataLoader = new DataLoader();
     this.gridManager = new GridManager();
-    
+
     // Initialize game systems
-    this.combatSystem = new CombatSystem(this.entityManager);
-    this.economySystem = new EconomySystem(this.entityManager);
-    this.pathfindingSystem = new PathfindingSystem(this.entityManager, this.gridManager);
-    
+        this.combatSystem = new CombatSystem(this.entityManager);
+        this.economySystem = new EconomySystem(this.entityManager);
+        this.pathfindingSystem = new PathfindingSystem(this.entityManager, this.gridManager);
+        this.harvesterFSM = new HarvesterFSM(this.entityManager, this.gridManager, this.pathfindingSystem, this.economySystem);
+        this.combatSystem.setGridManager(this.gridManager);
+
     // Connect systems to DataLoader
     this.combatSystem.setDataLoader(this.dataLoader);
     this.economySystem.setDataLoader(this.dataLoader);
+    this.harvesterFSM.setDataLoader(this.dataLoader);
 
     // Add start/update methods to gameInstance
     this.gameInstance = {
@@ -44,14 +49,16 @@ export class MainMapScene extends Phaser.Scene {
         console.log('Systems initialized:', {
           combat: !!this.combatSystem,
           economy: !!this.economySystem,
-          pathfinding: !!this.pathfindingSystem
+          pathfinding: !!this.pathfindingSystem,
+          harvesterFSM: !!this.harvesterFSM
         });
       },
       update: (delta: number) => {
         // Update all systems
         this.combatSystem.update(delta);
         this.economySystem.update(delta);
-        
+        this.harvesterFSM.update(delta, delta);
+
         // Update pathfinding for all moving entities
         const entities = this.entityManager.getAllEntities();
         for (const entityId of entities) {
@@ -196,6 +203,16 @@ export class MainMapScene extends Phaser.Scene {
 
   // Add building to map
   addBuilding(x: number, y: number, type: string, _faction: string) {
+    // Check if tile is concrete (concrete slab constraint)
+    const gridX = Math.floor(x / this.gridManager.cellSize);
+    const gridY = Math.floor(y / this.gridManager.cellSize);
+    const terrainType = this.gridManager.getTerrainType(gridX, gridY);
+
+    if (terrainType !== 'concrete') {
+      console.log(`Cannot build ${type} on ${terrainType} terrain. Must be on concrete.`);
+      return;
+    }
+
     const buildings = {
       'power_node': { width: 64, height: 64, color: '#ffaa00' },
       'refinery': { width: 80, height: 64, color: '#ff6600' }
