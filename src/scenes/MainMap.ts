@@ -4,11 +4,13 @@ import Phaser from 'phaser';
 import { EntityManager } from '../ecs/EntityManager';
 import { DataLoader } from '../data/DataLoader';
 import { PositionComponent, RenderableComponent } from '../ecs/Component';
+import { GridManager } from '../core/GridManager';
 
 export class MainMapScene extends Phaser.Scene {
   private gameInstance: any;
   private entityManager!: EntityManager;
   private dataLoader!: DataLoader;
+  private gridManager!: GridManager;
 
   constructor() {
     super({ key: 'MainMap' });
@@ -19,6 +21,7 @@ export class MainMapScene extends Phaser.Scene {
     this.gameInstance = {};
     this.entityManager = new EntityManager();
     this.dataLoader = new DataLoader();
+    this.gridManager = new GridManager();
 
     // Load faction data
     this.dataLoader.load().then(() => {
@@ -44,6 +47,9 @@ export class MainMapScene extends Phaser.Scene {
       fontSize: '18px',
       color: '#ffffff'
     });
+
+    // Render the actual grid terrain
+    this.renderTerrain();
 
     // Start the first 5 units (example)
     this.spawnInitialUnits();
@@ -146,10 +152,46 @@ export class MainMapScene extends Phaser.Scene {
     console.log('Handling camera...');
   }
 
-  // Render terrain
-  renderTerrain() {
-    // Placeholder for terrain rendering
-    console.log('Rendering terrain...');
+  // Render terrain from GridManager's 100x100 matrix
+  renderTerrain(): void {
+    console.log('Rendering actual terrain grid...');
+    
+    // Clear any existing graphics
+    const existingGraphics = this.children.getByName('grid-layer');
+    if (existingGraphics) {
+      existingGraphics.destroy();
+    }
+    
+    const graphics = this.add.graphics();
+    graphics.setName('grid-layer');
+    
+    const tileSize = this.gridManager.gridToWorld(1, 0).x - this.gridManager.gridToWorld(0, 0).x;
+    
+    // Iterate through 100x100 grid and render tiles
+    for (let gridX = 0; gridX < 100; gridX++) {
+      for (let gridY = 0; gridY < 100; gridY++) {
+        const worldPos = this.gridManager.gridToWorld(gridX, gridY);
+        
+        let color = '#888888'; // Concrete (default)
+        let alpha = 0.3;
+        
+        // Check if it's a hazard zone
+        if (this.gridManager.isInHazardZone(gridX, gridY)) {
+          color = '#ff6666'; // Red for hazards
+          alpha = 0.5;
+        }
+        
+        // Draw a simple rectangle for each tile
+        graphics.fillStyle(Number(color.replace('#', '0x')), alpha);
+        graphics.fillRect(worldPos.x, worldPos.y, tileSize, tileSize);
+        
+        // Draw grid lines
+        graphics.lineStyle(1, Number('#444444'.replace('#', '0x')), 0.5);
+        graphics.strokeRect(worldPos.x, worldPos.y, tileSize, tileSize);
+      }
+    }
+    
+    console.log('Rendered 100x100 terrain grid');
   }
 
   // Update hazard zones
