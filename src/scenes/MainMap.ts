@@ -86,12 +86,16 @@ export class MainMapScene extends Phaser.Scene {
 
   // Create harvester unit components
   private createHarvesterUnit() {
-    return new PositionComponent();
+    return [
+      new RenderableComponent(undefined, 32, 32, '#00ff00'),
+    ];
   }
 
   // Create combat tank unit components
   private createCombatTankUnit() {
-    return new PositionComponent();
+    return [
+      new RenderableComponent(undefined, 40, 40, '#00ccff'),
+    ];
   }
 
   // Add building to map

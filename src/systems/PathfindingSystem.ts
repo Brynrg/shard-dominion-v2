@@ -1,5 +1,6 @@
 import { EntityManager } from '../ecs/EntityManager';
 import { PositionComponent, VelocityComponent, MovementComponent } from '../ecs/Component';
+import { GridManager } from '../core/GridManager';
 
 // Simple A* pathfinding implementation
 interface Node {
@@ -13,64 +14,48 @@ interface Node {
 
 export class PathfindingSystem {
   private entityManager: EntityManager;
-  private gridWidth = 100;
-  private gridHeight = 100;
-  private walkableGrid: Set<string> = new Set();
-  private hazardGrid: Set<string> = new Set();
+  private gridManager: GridManager;
 
-  constructor(entityManager: EntityManager) {
+  constructor(entityManager: EntityManager, gridManager: GridManager) {
     this.entityManager = entityManager;
-    this.initializeGrid();
+    this.gridManager = gridManager;
   }
 
-  private initializeGrid(): void {
-    // Default all tiles as walkable
-    for (let x = 0; x < this.gridWidth; x++) {
-      for (let y = 0; y < this.gridHeight; y++) {
-        this.walkableGrid.add(`${x},${y}`);
-      }
-    }
-  }
+
 
   // Set a tile as unwalkable (for buildings, obstacles)
   setUnwalkable(x: number, y: number): void {
-    this.walkableGrid.delete(`${x},${y}`);
+    this.gridManager.setWalkable(x, y, false);
   }
 
   // Set a tile as walkable
   setWalkable(x: number, y: number): void {
-    this.walkableGrid.add(`${x},${y}`);
+    this.gridManager.setWalkable(x, y, true);
   }
 
   // Set a tile as hazard zone (higher movement cost)
   setHazard(x: number, y: number): void {
-    this.hazardGrid.add(`${x},${y}`);
+    this.gridManager.setHazardZone(x, y, true);
   }
 
   // Check if a tile is walkable
   isWalkable(x: number, y: number): boolean {
-    return this.walkableGrid.has(`${x},${y}`);
+    return this.gridManager.isWalkable(x, y);
   }
 
   // Get movement cost for a tile (hazard zones cost more)
   getMovementCost(x: number, y: number): number {
-    return this.hazardGrid.has(`${x},${y}`) ? 2.0 : 1.0;
+    return this.gridManager.isInHazardZone(x, y) ? 2.0 : 1.0;
   }
 
   // Convert world coordinates to grid coordinates
   worldToGrid(worldX: number, worldY: number): { x: number; y: number } {
-    return {
-      x: Math.floor(worldX / 32),
-      y: Math.floor(worldY / 32)
-    };
+    return this.gridManager.worldToGrid(worldX, worldY);
   }
 
   // Convert grid coordinates to world coordinates
   gridToWorld(gridX: number, gridY: number): { x: number; y: number } {
-    return {
-      x: gridX * 32,
-      y: gridY * 32
-    };
+    return this.gridManager.gridToWorld(gridX, gridY);
   }
 
   // A* pathfinding algorithm
@@ -178,7 +163,7 @@ export class PathfindingSystem {
       const newY = y + dir.y;
 
       // Check bounds
-      if (newX >= 0 && newX < this.gridWidth && newY >= 0 && newY < this.gridHeight) {
+      if (newX >= 0 && newX < 100 && newY >= 0 && newY < 100) {
         // Check if walkable
         if (this.isWalkable(newX, newY)) {
           neighbors.push({ x: newX, y: newY, g: 0, h: 0, f: 0, parent: null });
