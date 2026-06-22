@@ -1,7 +1,7 @@
 // Combat system - handles targeting, veterancy, and weapon mechanics
 import { EntityManager } from '../ecs/EntityManager';
 import { System } from '../ecs/System';
-import { PositionComponent, HealthComponent, ExperienceComponent, CombatComponent, UnitTypeComponent } from '../ecs/Component';
+import { PositionComponent, HealthComponent, ExperienceComponent, CombatComponent, UnitTypeComponent, FactionComponent } from '../ecs/Component';
 import { DataLoader } from '../data/DataLoader';
 import { GridManager } from '../core/GridManager';
 
@@ -153,6 +153,9 @@ export class CombatSystem extends System {
     const position = this.entityManager.getComponent<PositionComponent>(entityId, PositionComponent);
     if (!position) return null;
 
+    const attackerFaction = this.entityManager.getComponent<FactionComponent>(entityId, FactionComponent);
+    if (!attackerFaction) return null;
+
     let nearestEnemy: number | null = null;
     let minDistance = Infinity;
 
@@ -166,6 +169,13 @@ export class CombatSystem extends System {
 
       const otherPosition = this.entityManager.getComponent<PositionComponent>(otherId, PositionComponent);
       if (!otherPosition) continue;
+
+      // Check if the other entity has a FactionComponent and if it's the same team
+      const otherFaction = this.entityManager.getComponent<FactionComponent>(otherId, FactionComponent);
+      if (otherFaction && otherFaction.faction === attackerFaction.faction) {
+        // Same faction - skip this entity (friendly fire disabled)
+        continue;
+      }
 
       const distance = this.calculateDistance(position, otherPosition);
       if (distance < minDistance && distance <= this.combatRange) {

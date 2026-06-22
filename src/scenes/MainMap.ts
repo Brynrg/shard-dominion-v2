@@ -20,6 +20,7 @@ export class MainMapScene extends Phaser.Scene {
   private pathfindingSystem!: PathfindingSystem;
   private harvesterFSM!: HarvesterFSM;
   private selectedEntities: number[] = [];
+  private entityGameObjects: Map<number, Phaser.GameObjects.Graphics> = new Map();
 
   constructor() {
     super({ key: 'MainMap' });
@@ -116,6 +117,17 @@ export class MainMapScene extends Phaser.Scene {
     // Update game systems
     this.gameInstance.update(delta);
 
+    // Update entity game objects to sync with position components
+    for (const [entityId, graphics] of this.entityGameObjects) {
+      const position = this.entityManager.getComponent<PositionComponent>(entityId, PositionComponent);
+      if (position) {
+        // Clear and redraw the graphics at the new position
+        graphics.clear();
+        graphics.fillStyle(Number(graphics.name.includes('harvester') ? '#00ff00' : '#00ccff'), 1);
+        graphics.fillRect(position.x - 16, position.y - 16, 32, 32);
+      }
+    }
+
     // Update entities - simple movement
     const entities = this.entityManager.getAllEntities();
     for (const entityId of entities) {
@@ -168,44 +180,66 @@ export class MainMapScene extends Phaser.Scene {
   // Spawn initial units for demonstration
   private spawnInitialUnits(): void {
     // Spawn a harvester unit
-    const harvesterId = this.entityManager.createEntity([
-      new PositionComponent(100, 100),
-      new RenderableComponent(undefined, 32, 32, '#00ff00'),
-      this.createHarvesterUnit()
-    ]);
+    const harvesterId = this.createHarvesterUnit(100, 100);
 
     // Spawn a combat tank unit
-    const tankId = this.entityManager.createEntity([
-      new PositionComponent(200, 150),
-      new RenderableComponent(undefined, 40, 40, '#00ccff'),
-      this.createCombatTankUnit()
-    ]);
+    const tankId = this.createCombatTankUnit(200, 150);
 
     console.log('Spawned initial units:', harvesterId, tankId);
   }
 
   // Create harvester unit components
-  private createHarvesterUnit() {
-    return [
+  private createHarvesterUnit(x: number, y: number): number {
+    const entityId = this.entityManager.createEntity([
+      new PositionComponent(x, y),
+      new VelocityComponent(0, 0, 1.5),
+      new MovementComponent([], 0, 1.5, false),
       new HealthComponent(300),
-      new ExperienceComponent(),
+      new RenderableComponent(undefined, 32, 32, '#00ff00'),
       new ResourceComponent(500, 0, 'aether_shards'),
       new UnitTypeComponent('harvester', 'vanguard_enclave'),
-      new MovementComponent([], 0, 1.5, false),
-      new FactionComponent('vanguard_enclave'),
-    ];
+      new FactionComponent('vanguard_enclave')
+    ]);
+
+    // Create persistent Phaser GameObject for rendering
+    this.createEntityGameObject(entityId, 32, 32, '#00ff00');
+
+    return entityId;
   }
 
   // Create combat tank unit components
-  private createCombatTankUnit() {
-    return [
+  private createCombatTankUnit(x: number, y: number): number {
+    const entityId = this.entityManager.createEntity([
+      new PositionComponent(x, y),
+      new VelocityComponent(0, 0, 2.2),
+      new MovementComponent([], 0, 2.2, false),
       new HealthComponent(400),
-      new ExperienceComponent(),
+      new RenderableComponent(undefined, 40, 40, '#00ccff'),
       new CombatComponent(45, 5, 1.5, 0, null),
       new UnitTypeComponent('combat_tank', 'vanguard_enclave'),
-      new MovementComponent([], 0, 2.2, false),
-      new FactionComponent('vanguard_enclave'),
-    ];
+      new ExperienceComponent(),
+      new FactionComponent('vanguard_enclave')
+    ]);
+
+    // Create persistent Phaser GameObject for rendering
+    this.createEntityGameObject(entityId, 40, 40, '#00ccff');
+
+    return entityId;
+  }
+
+  // Create persistent Phaser GameObject for an entity
+  private createEntityGameObject(entityId: number, width: number, height: number, color: string): void {
+    const position = this.entityManager.getComponent<PositionComponent>(entityId, PositionComponent);
+    if (!position) return;
+
+    // Create a Graphics object for the entity
+    const graphics = this.add.graphics();
+    graphics.fillStyle(Number(color.replace('#', '0x')), 1);
+    graphics.fillRect(position.x - width / 2, position.y - height / 2, width, height);
+    graphics.setName(`entity-${entityId}`);
+
+    // Store the graphics object for later updates
+    this.entityGameObjects.set(entityId, graphics);
   }
 
   // Add building to map
