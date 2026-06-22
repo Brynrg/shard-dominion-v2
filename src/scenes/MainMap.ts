@@ -85,21 +85,28 @@ export class MainMapScene extends Phaser.Scene {
     // Initialize game systems
     this.gameInstance.start();
 
-    // Set up camera
-    this.cameras.main.setBounds(0, 0, 3200, 3200); // Large isometric world
-    this.cameras.main.setZoom(1);
+    // Compute world-space pixel dimensions of the 100x100 iso matrix
+    // Diamond bounds: top (0,0), right (100,0), bottom (100,100), left (0,100)
+    const diamondWidth = 100 * this.gridManager.cellSize; // 3200
+    const diamondHeight = 100 * this.gridManager.cellSize; // 3200
+
+    // Set camera bounds to the diamond
+    this.cameras.main.setBounds(0, 0, diamondWidth, diamondHeight);
+
+    // Center the camera
+    this.cameras.main.centerOn(diamondWidth / 2, diamondHeight / 2);
 
     // Add input handling
     this.input.on('pointerdown', this.handlePointerDown, this);
 
     // Add some debug info
-    this.add.text(10, 10, 'Shard Dominion v2 - ECS System Running', {
+    this.add.text(10, 10, 'Shard Dominion v2 - Iso Camera + Grid Render', {
       fontSize: '18px',
       color: '#ffffff'
     });
 
-    // Render the actual grid terrain
-    this.renderTerrain();
+    // Render the full 100x100 grid via Graphics
+    this.renderIsoGrid();
 
     // Start the first 5 units (example)
     this.spawnInitialUnits();
@@ -286,26 +293,26 @@ export class MainMapScene extends Phaser.Scene {
   // Render terrain from GridManager's 100x100 matrix
   renderTerrain(): void {
     console.log('Rendering actual terrain grid...');
-    
+
     // Clear any existing graphics
     const existingGraphics = this.children.getByName('grid-layer');
     if (existingGraphics) {
       existingGraphics.destroy();
     }
-    
+
     const graphics = this.add.graphics();
     graphics.setName('grid-layer');
-    
-    const tileSize = this.gridManager.gridToWorld(1, 0).x - this.gridManager.gridToWorld(0, 0).x;
-    
+
+    const tileSize = this.gridManager.cellSize;
+
     // Iterate through 100x100 grid and render tiles
     for (let gridX = 0; gridX < 100; gridX++) {
       for (let gridY = 0; gridY < 100; gridY++) {
         const worldPos = this.gridManager.gridToWorld(gridX, gridY);
-        
+
         let color = '#888888'; // Concrete (default)
         let alpha = 0.3;
-        
+
         // Get terrain type and set color
         const terrainType = this.gridManager.getTerrainType(gridX, gridY);
         switch (terrainType) {
@@ -323,24 +330,43 @@ export class MainMapScene extends Phaser.Scene {
             color = '#757575'; // Concrete (grey)
             break;
         }
-        
+
         // Check if it's a hazard zone
         if (this.gridManager.isInHazardZone(gridX, gridY)) {
           color = '#ff6666'; // Red for hazards
           alpha = 0.6;
         }
-        
+
         // Draw a simple rectangle for each tile
         graphics.fillStyle(Number(color.replace('#', '0x')), alpha);
         graphics.fillRect(worldPos.x, worldPos.y, tileSize, tileSize);
-        
+
         // Draw grid lines
         graphics.lineStyle(1, Number('#444444'.replace('#', '0x')), 0.5);
         graphics.strokeRect(worldPos.x, worldPos.y, tileSize, tileSize);
       }
     }
-    
+
     console.log('Rendered 100x100 terrain grid');
+  }
+
+  // Render the full 100x100 iso grid via Graphics using GridManager
+  renderIsoGrid(): void {
+    console.log('Rendering full 100x100 iso grid via Graphics...');
+
+    // Clear any existing graphics
+    const existingGraphics = this.children.getByName('iso-grid-layer');
+    if (existingGraphics) {
+      existingGraphics.destroy();
+    }
+
+    const graphics = this.add.graphics();
+    graphics.setName('iso-grid-layer');
+
+    // Use GridManager's renderDebugToGraphics method
+    this.gridManager.renderDebugToGraphics(graphics);
+
+    console.log('Rendered full 100x100 iso grid');
   }
 
   // Seed initial grid data

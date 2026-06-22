@@ -137,4 +137,44 @@ export class GridManager {
     const key = this.gridKey(x, y);
     return this.terrainTypes.get(key) || 'concrete';
   }
+
+  // Render the grid to Phaser Graphics
+  renderDebugToGraphics(graphics: Phaser.GameObjects.Graphics): void {
+    graphics.clear();
+
+    // Draw grid lines
+    for (let x = 0; x <= this.gridSize; x++) {
+      for (let y = 0; y <= this.gridSize; y++) {
+        const world = this.gridToWorld(x, y);
+
+        // Horizontal lines
+        if (x < this.gridSize) {
+          const right = this.gridToWorld(x + 1, y);
+          graphics.lineStyle(1, 0x444444, 0.5);
+          graphics.beginPath();
+          graphics.moveTo(world.x, world.y);
+          graphics.lineTo(right.x, right.y);
+          graphics.strokePath();
+        }
+
+        // Vertical lines
+        if (y < this.gridSize) {
+          const up = this.gridToWorld(x, y + 1);
+          graphics.lineStyle(1, 0x444444, 0.5);
+          graphics.beginPath();
+          graphics.moveTo(world.x, world.y);
+          graphics.lineTo(up.x, up.y);
+          graphics.strokePath();
+        }
+      }
+    }
+
+    // Highlight hazard zones in red
+    graphics.fillStyle(0xff6666, 0.3);
+    this.hazardZones.forEach(key => {
+      const [x, y] = key.split(',').map(Number);
+      const world = this.gridToWorld(x, y);
+      graphics.fillRect(world.x, world.y, this.cellSize, this.cellSize);
+    });
+  }
 }
