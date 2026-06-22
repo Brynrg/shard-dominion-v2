@@ -78,7 +78,8 @@ export class MovementComponent extends Component {
     public path: Array<{x: number, y: number}> = [],
     public currentPathIndex: number = 0,
     public speed: number = 1,
-    public isMoving: boolean = false
+    public isMoving: boolean = false,
+    public targetPosition: {x: number, y: number} | null = null
   ) {
     super('Movement');
   }

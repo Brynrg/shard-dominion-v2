@@ -299,22 +299,32 @@ export class MainMapScene extends Phaser.Scene {
     const worldX = this.input.activePointer.x + this.cameras.main.scrollX;
     const worldY = this.input.activePointer.y + this.cameras.main.scrollY;
 
-    // For now, select the first spawned unit and move it to the clicked position
-    if (this.selectedEntities.length === 0) {
-      // Select first entity (harvester)
-      this.selectedEntities.push(this.entityManager.getAllEntities()[0]);
-      console.log('Selected entity:', this.selectedEntities[0]);
+    // Convert screen click to isometric grid coordinates
+    const gridPos = this.gridManager.worldToGrid(worldX, worldY);
+    const { x: gridX, y: gridY } = gridPos;
+
+    // Check if the clicked tile is walkable
+    if (!this.gridManager.isWalkable(gridX, gridY)) {
+      console.log('Cannot move to non-walkable tile:', gridX, gridY);
+      return;
     }
 
-    // Move selected entity to clicked position
+    // Select the first entity if none selected
+    if (this.selectedEntities.length === 0) {
+      const entities = this.entityManager.getAllEntities();
+      if (entities.length > 0) {
+        this.selectedEntities.push(entities[0]);
+        console.log('Selected entity:', entities[0]);
+      }
+    }
+
+    // Set target position for the selected entity
     const entityId = this.selectedEntities[0];
     const movement = this.entityManager.getComponent<MovementComponent>(entityId, MovementComponent);
     if (movement) {
-      movement.path = [];
-      movement.currentPathIndex = 0;
+      movement.targetPosition = { x: gridX, y: gridY };
       movement.isMoving = true;
-      movement.path.push({ x: worldX, y: worldY });
-      console.log('Moving entity', entityId, 'to position:', worldX, worldY);
+      console.log('Moving entity', entityId, 'to grid position:', gridX, gridY);
     }
   }
 

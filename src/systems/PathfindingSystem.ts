@@ -196,11 +196,19 @@ export class PathfindingSystem {
       return;
     }
 
-    // If no path, calculate one to current target or wander
-    if (movement.path.length === 0) {
+    // If no target, calculate one to current target or wander
+    if (!movement.targetPosition) {
       // For now, just move in a random direction
       const targetX = position.x + (Math.random() - 0.5) * 100;
       const targetY = position.y + (Math.random() - 0.5) * 100;
+      const path = this.findPath(position.x, position.y, targetX, targetY);
+      movement.path = path;
+      movement.currentPathIndex = 0;
+      movement.isMoving = path.length > 0;
+    } else {
+      // Calculate path to target position
+      const targetX = movement.targetPosition.x * this.gridManager.cellSize;
+      const targetY = movement.targetPosition.y * this.gridManager.cellSize;
       const path = this.findPath(position.x, position.y, targetX, targetY);
       movement.path = path;
       movement.currentPathIndex = 0;
@@ -224,6 +232,7 @@ export class PathfindingSystem {
           movement.path = [];
           movement.currentPathIndex = 0;
           movement.isMoving = false;
+          movement.targetPosition = null; // Clear target when reached
         }
       } else {
         // Move towards current target
