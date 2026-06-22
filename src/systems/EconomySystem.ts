@@ -1,7 +1,7 @@
 // Economy system - handles resource gathering, building, and credit management
 import { EntityManager } from '../ecs/EntityManager';
 import { System } from '../ecs/System';
-import { PositionComponent, ResourceComponent, HealthComponent } from '../ecs/Component';
+import { PositionComponent, HealthComponent } from '../ecs/Component';
 
 export class EconomySystem extends System {
   private globalCredits: number = 1000;
@@ -23,21 +23,8 @@ export class EconomySystem extends System {
   }
 
   private processHarvesters(_deltaTime: number): void {
-    const harvesters = this.entityManager.getEntitiesWithComponents([
-      PositionComponent, ResourceComponent
-    ]);
-
-    harvesters.forEach(entityId => {
-      const position = this.entityManager.getComponent<PositionComponent>(entityId, PositionComponent);
-      const resource = this.entityManager.getComponent<ResourceComponent>(entityId, ResourceComponent);
-
-      if (!position || !resource) return;
-
-      // Simple harvester logic: gather resources periodically
-      if (Math.random() < 0.01) { // 1% chance per frame
-        resource.current = Math.min(resource.capacity, resource.current + 10);
-      }
-    });
+    // Harvester FSM handles all gathering logic - just delegate
+    // No Math.random() gathering here
   }
 
   private processRefineries(_deltaTime: number): void {

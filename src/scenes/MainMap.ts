@@ -58,12 +58,29 @@ export class MainMapScene extends Phaser.Scene {
         // Update all systems
         this.combatSystem.update(delta);
         this.economySystem.update(delta);
-        this.harvesterFSM.update(delta, delta);
+
+        // Update harvester FSM for each harvester entity
+        const harvesters = this.entityManager.getEntitiesWithComponents([
+          PositionComponent, ResourceComponent
+        ]);
+        for (const entityId of harvesters) {
+          this.harvesterFSM.update(entityId, delta);
+        }
 
         // Update pathfinding for all moving entities
         const entities = this.entityManager.getAllEntities();
         for (const entityId of entities) {
           this.pathfindingSystem.updateMovement(entityId, delta);
+        }
+
+        // Apply hazard damage to all entities
+        this.combatSystem.applyHazardDamageToAll();
+
+        // Update live HUD with current credits
+        const hudText = (this.gameInstance as any).hudText;
+        if (hudText) {
+          const credits = this.economySystem.getGlobalCredits();
+          hudText.setText(`Credits: ${credits}`);
         }
       }
     };
@@ -111,6 +128,12 @@ export class MainMapScene extends Phaser.Scene {
 
     // Start the first 5 units (example)
     this.spawnInitialUnits();
+
+    // Create live HUD for global credits
+    this.createLiveHUD();
+
+    // Start 45s repeating timer for Shard Bloom hazard events
+    this.startShardBloomTimer();
   }
 
   update(_time: number, delta: number): void {
@@ -240,6 +263,47 @@ export class MainMapScene extends Phaser.Scene {
 
     // Store the graphics object for later updates
     this.entityGameObjects.set(entityId, graphics);
+  }
+
+  // Create live HUD for global credits
+  private createLiveHUD(): void {
+    // Create a camera-anchored text object
+    const hudText = this.add.text(20, 20, 'Credits: 1000', {
+      fontSize: '24px',
+      color: '#00ff00',
+      backgroundColor: '#000000',
+      padding: { x: 10, y: 5 }
+    }).setScrollFactor(0); // Camera-anchored (scrollFactor 0)
+
+    // Store reference to update in update loop
+    (this.gameInstance as any).hudText = hudText;
+  }
+
+  // Start 45s repeating timer for Shard Bloom hazard events
+  private startShardBloomTimer(): void {
+    // Create a repeating timer that triggers every 45 seconds
+    this.time.addEvent({
+      delay: 45000, // 45 seconds
+      callback: this.triggerShardBloom,
+      callbackScope: this,
+      loop: true
+    });
+  }
+
+  // Trigger a Shard Bloom hazard event
+  private triggerShardBloom(): void {
+    // Randomly select a 3x3 grid area for the hazard
+    const gridX = Math.floor(Math.random() * 98); // 0-97 to stay within 100x100
+    const gridY = Math.floor(Math.random() * 98);
+
+    // Flag the 3x3 area as a hazard zone
+    for (let dx = 0; dx < 3; dx++) {
+      for (let dy = 0; dy < 3; dy++) {
+        this.gridManager.setHazardZone(gridX + dx, gridY + dy, true);
+      }
+    }
+
+    console.log(`Shard Bloom triggered at grid (${gridX}, ${gridY}) - 3x3 hazard zone`);
   }
 
   // Add building to map
@@ -443,6 +507,16 @@ export class MainMapScene extends Phaser.Scene {
 
     // Add one hazard zone for demo
     this.gridManager.setHazardZone(50, 50, true);
+
+    // Add a refinery (building) at a concrete location
+    this.addBuilding(30, 30, 'refinery', 'vanguard_enclave');
+
+    // Add a shard node (resource node) at a concrete location
+    const shardId = this.entityManager.createEntity([
+      new PositionComponent(70, 70),
+      new ResourceComponent(500, 0, 'aether_shards')
+    ]);
+    this.createEntityGameObject(shardId, 24, 24, '#ffaa00');
 
     console.log('Initial grid data seeded');
   }

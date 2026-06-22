@@ -309,7 +309,7 @@ export class HarvesterFSM {
     let nearestRefinery: number | null = null;
     let minDistance = Infinity;
 
-    // Find all refineries
+    // Find all refineries (buildings with HealthComponent)
     const refineries = this.entityManager.getEntitiesWithComponents([
       PositionComponent, HealthComponent
     ]);

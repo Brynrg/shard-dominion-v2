@@ -343,6 +343,29 @@ export class CombatSystem extends System {
     }
   }
 
+  // Apply hazard damage to all entities (called from MainMap update loop)
+  applyHazardDamageToAll(): void {
+    // Get all entities with health
+    const entities = this.entityManager.getAllEntities();
+
+    for (const entityId of entities) {
+      const position = this.entityManager.getComponent<PositionComponent>(entityId, PositionComponent);
+      const health = this.entityManager.getComponent<HealthComponent>(entityId, HealthComponent);
+
+      if (!position || !health) continue;
+
+      // Check if entity is in any hazard zone
+      const gridX = Math.floor(position.x / 32);
+      const gridY = Math.floor(position.y / 32);
+
+      if (this.gridManager.isInHazardZone(gridX, gridY)) {
+        // Apply 5 damage per tick (every 1 second)
+        health.currentHp -= 5;
+        console.log(`Unit ${entityId} took 5 damage from hazard zone`);
+      }
+    }
+  }
+
   // Render combat visual effects
   renderCombatEffects(): void {
     // Placeholder for combat visuals
