@@ -1,7 +1,7 @@
 // Economy system - handles resource gathering, building, and credit management
 import { EntityManager } from '../ecs/EntityManager';
 import { System } from '../ecs/System';
-import { PositionComponent, HealthComponent } from '../ecs/Component';
+import { PositionComponent, HealthComponent, ResourceComponent } from '../ecs/Component';
 
 export class EconomySystem extends System {
   private globalCredits: number = 1000;
@@ -23,8 +23,24 @@ export class EconomySystem extends System {
   }
 
   private processHarvesters(_deltaTime: number): void {
-    // Harvester FSM handles all gathering logic - just delegate
-    // No Math.random() gathering here
+    // Get all harvesters (entities with ResourceComponent)
+    const harvesters = this.entityManager.getEntitiesWithComponents([
+      PositionComponent, ResourceComponent
+    ]);
+
+    harvesters.forEach(entityId => {
+      // Delegate to HarvesterFSM for state machine logic
+      // Note: HarvesterFSM is managed by MainMap, but we can call its update method
+      // if we have access to it. For now, we'll just log that harvesters exist.
+      const position = this.entityManager.getComponent<PositionComponent>(entityId, PositionComponent);
+      const resource = this.entityManager.getComponent<ResourceComponent>(entityId, ResourceComponent);
+      const health = this.entityManager.getComponent<HealthComponent>(entityId, HealthComponent);
+
+      if (position && resource && health) {
+        // Log harvester state for debugging
+        console.log(`Harvester ${entityId}: credits=${this.globalCredits}, cargo=${resource.current}/${resource.capacity}, hp=${health.currentHp}/${health.maxHp}`);
+      }
+    });
   }
 
   private processRefineries(_deltaTime: number): void {
